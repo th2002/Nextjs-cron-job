@@ -4,6 +4,8 @@ export const countryMap: { [key: string]: { flag: string; name: string } } = {
   al: { flag: "🇦🇱", name: "Albania" },
   dz: { flag: "🇩🇿", name: "Algeria" },
   ad: { flag: "🇦🇩", name: "Andorra" },
+  us: { flag: "🇺🇸", name: "United States" },
+  gb: { flag: "🇬🇧", name: "United Kingdom" },
   ao: { flag: "🇦🇴", name: "Angola" },
   ag: { flag: "🇦🇬", name: "Antigua and Barbuda" },
   ar: { flag: "🇦🇷", name: "Argentina" },

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon -H 0.0.0.0",
+    "dev": "rm -rf .next && next build && nodemon -H 0.0.0.0",
     "build": "rm -rf .next && next build && tsc --project tsconfig.server.json",
     "start": "ts-node --project tsconfig.server.json dist/server.js",
     "lint": "next lint"
@@ -30,3 +30,4 @@
     "typescript": "^5"
   }
 }
+

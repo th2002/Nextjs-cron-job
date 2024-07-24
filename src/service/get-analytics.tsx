@@ -12,6 +12,11 @@ interface CountryView {
   y: number;
 }
 
+interface PageAnalytics {
+  views: number;
+  countries: Record<string, number>;
+}
+
 export async function getAnalyticsData(hours: number) {
   const websiteId = config.umami_website_id;
   const timeZone = "Australia/Sydney";
@@ -42,25 +47,47 @@ export async function getAnalyticsData(hours: number) {
     },
   });
 
-  // Fetch country views
-  const countryViewsUrl = `${
-    config.umami_api_url
-  }/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&unit=hour&timezone=${encodeURIComponent(
-    timeZone
-  )}&type=country&limit=20`;
-  const countryViewsResponse = await axios.get<CountryView[]>(countryViewsUrl, {
-    headers: { Authorization: `Bearer ${token}` },
+  // Initialize analytics object
+  const analytics: Record<string, PageAnalytics> = {};
+
+  // Process page views
+  pageViewsResponse.data.forEach((page) => {
+    const pageName = page.x.replace(/^\//, "") || "home";
+    analytics[pageName] = {
+      views: page.y,
+      countries: {},
+    };
   });
 
-  // Combine and format the data
+  // Fetch country views for each page
+  for (const pageName of Object.keys(analytics)) {
+    const countryViewsUrl = `${
+      config.umami_api_url
+    }/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&unit=hour&timezone=${encodeURIComponent(
+      timeZone
+    )}&type=country&url=${encodeURIComponent(
+      pageName === "home" ? "/" : `/${pageName}`
+    )}&limit=20`;
+    const countryViewsResponse = await axios.get<CountryView[]>(
+      countryViewsUrl,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    countryViewsResponse.data.forEach((country) => {
+      analytics[pageName].countries[country.x.toLowerCase()] = country.y;
+    });
+  }
+
+  // Format the data
   const formattedData: Record<string, string> = {};
-  pageViewsResponse.data.forEach((page) => {
-    const pageName = page.x.replace(/^\//, ""); // Remove leading slash
-    const countryViews = countryViewsResponse.data
-      .map((country) => `${country.y} - ${country.x.toLowerCase()}`)
+  for (const [pageName, pageData] of Object.entries(analytics)) {
+    const countryViews = Object.entries(pageData.countries)
+      .map(([country, views]) => `${views} - ${country}`)
       .join(", ");
-    formattedData[pageName || "home"] = `${countryViews}`;
-  });
+    formattedData[pageName] = countryViews;
+  }
 
   return {
     analytics: formattedData,

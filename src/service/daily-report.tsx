@@ -1,4 +1,4 @@
-import { countryMap } from "../app/mock/country";
+import { countryMap } from "../mock/country";
 import { getAnalyticsData } from "./get-analytics";
 import { getUptimeData } from "./get-uptime";
 import { sendSlackNotication } from "./slack-notication";

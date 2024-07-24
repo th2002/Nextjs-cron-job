@@ -1,4 +1,4 @@
-import { DailyReport } from "@/src/service/daily-report";
+import { DailyReport } from "@/service/daily-report";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
