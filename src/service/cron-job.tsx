@@ -27,7 +27,6 @@ async function executeNotificationJob(minutes: number) {
 }
 
 const CronJob = () => {
-  cron.schedule("*/5 * * * *", () => executeNotificationJob(5));
   cron.schedule("0 */2 * * *", () => executeNotificationJob(120));
   cron.schedule("0 0 * * *", () => executeNotificationJob(1440));
 };
