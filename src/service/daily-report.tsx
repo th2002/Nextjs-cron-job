@@ -21,23 +21,24 @@ function formatTimeFrame(minutes: number): string {
 
 export async function DailyReport(minutes: number) {
   try {
+    const hours = Math.ceil(minutes / 60);
     const [analyticsData, uptimeData] = await Promise.all([
       getAnalyticsData(minutes),
-      getUptimeData(minutes),
+      getUptimeData(hours),
     ]);
+
+    console.log("uptime data", uptimeData);
 
     const analyticsBlocks: SlackBlock[] = [];
 
-    for (const [pageName, visitorInfo] of Object.entries(
+    for (const [pageName, pageData] of Object.entries(
       analyticsData.analytics
     )) {
-      const displayPageName = pageName === "home" ? "home" : pageName;
-
       analyticsBlocks.push({
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `• ${displayPageName}: ${visitorInfo}`,
+          text: `• *${pageName}*:\n  Total views: ${pageData.totalViews}\n  IP detect:\n    ${pageData.ipDetect}`,
         },
       });
     }

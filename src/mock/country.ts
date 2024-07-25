@@ -9,6 +9,7 @@ export const countryMap: { [key: string]: { flag: string; name: string } } = {
   ao: { flag: "🇦🇴", name: "Angola" },
   ag: { flag: "🇦🇬", name: "Antigua and Barbuda" },
   ar: { flag: "🇦🇷", name: "Argentina" },
+  ua: { flag: "🇺🇦", name: "Ukraine" },
   am: { flag: "🇦🇲", name: "Armenia" },
   au: { flag: "🇦🇺", name: "Australia" },
   at: { flag: "🇦🇹", name: "Austria" },

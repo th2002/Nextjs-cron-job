@@ -40,7 +40,8 @@ export async function getAnalyticsData(minutes: number) {
     const analytics: Record<string, PageAnalytics> = {};
 
     pageViewsResponse.data.forEach((page) => {
-      const pageName = page.x.replace(/^\//, "") || "home";
+      let pageName = page.x.replace(/^\//, "").replace(/^en\//, "");
+      if (pageName === "en" || pageName === "") pageName = "home";
       analytics[pageName] = {
         views: page.y,
         countries: {},
@@ -48,18 +49,46 @@ export async function getAnalyticsData(minutes: number) {
     });
 
     for (const pageName of Object.keys(analytics)) {
-      const countryViewsUrl = `${
-        config.umami_api_url
-      }/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&unit=minute&type=country&url=${encodeURIComponent(
-        pageName === "home" ? "/" : `/${pageName}`
-      )}&limit=20`;
+      let url;
+      if (pageName === "home") {
+        url = ["/", "/en"]; // Check both root and /en for home page
+      } else {
+        url = `/en/${pageName}`;
+      }
 
-      const countryViewsResponse = await axios.get<CountryView[]>(
-        countryViewsUrl,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      let countryViewsResponse;
+      if (Array.isArray(url)) {
+        // For home page, try both URLs
+        const responses = await Promise.all(
+          url.map((u) =>
+            axios.get<CountryView[]>(
+              `${
+                config.umami_api_url
+              }/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&unit=minute&type=country&url=${encodeURIComponent(
+                u
+              )}&limit=20`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            )
+          )
+        );
+        // Combine results from both URLs
+        countryViewsResponse = {
+          data: responses.flatMap((response) => response.data),
+        };
+      } else {
+        countryViewsResponse = await axios.get<CountryView[]>(
+          `${
+            config.umami_api_url
+          }/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&unit=minute&type=country&url=${encodeURIComponent(
+            url
+          )}&limit=20`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      }
 
       console.log(`Country views for ${pageName}:`, countryViewsResponse.data);
 
@@ -68,36 +97,42 @@ export async function getAnalyticsData(minutes: number) {
       }
 
       countryViewsResponse.data.forEach((country) => {
-        analytics[pageName].countries[country.x.toLowerCase()] = country.y;
+        const lowerCountry = country.x.toLowerCase();
+        analytics[pageName].countries[lowerCountry] =
+          (analytics[pageName].countries[lowerCountry] || 0) + country.y;
       });
     }
 
-    const formattedData: Record<string, string> = {};
+    const formattedData: Record<
+      string,
+      { totalViews: number; ipDetect: string }
+    > = {};
     let totalViews = 0;
 
     for (const [pageName, pageData] of Object.entries(analytics)) {
       totalViews += pageData.views;
       const countryViews = Object.entries(pageData.countries)
+        .sort((a, b) => b[1] - a[1]) // Sort by view count, descending
         .map(([country, views]) => {
           const countryInfo = countryMap[country.toLowerCase()] || {
             flag: "🏳️",
             name: country,
           };
-          return `${views} ${countryInfo.flag} ${countryInfo.name}`;
+          return `${views} ${countryInfo.name} ${countryInfo.flag}`;
         })
-        .join(", ");
-      formattedData[pageName] = `${pageData.views} views: ${
-        countryViews || "No country data"
-      }`;
+        .join("\n    ");
+      formattedData[pageName] = {
+        totalViews: pageData.views,
+        ipDetect: countryViews || "No country data",
+      };
     }
 
     return {
       analytics: formattedData,
-      totalViews: `${totalViews} total views`,
+      totalViews: totalViews,
     };
   } catch (error) {
     console.error("Error in getAnalyticsData:", error);
     throw error;
   }
 }
-
