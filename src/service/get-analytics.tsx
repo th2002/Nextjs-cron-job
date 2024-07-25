@@ -19,28 +19,18 @@ interface PageAnalytics {
 
 export async function getAnalyticsData(hours: number) {
   const websiteId = config.umami_website_id;
-  const timeZone = "Australia/Sydney";
   const now = new Date();
 
-  // Convert current time to Australia time zone
-  const australiaTime = new Date(now.toLocaleString("en-US", { timeZone }));
-
-  const endAt = australiaTime.getTime();
+  const endAt = now.getTime();
 
   // Calculate start time (subtract required hours)
-  const startAt = new Date(
-    australiaTime.getTime() - hours * 60 * 60 * 1000
-  ).getTime();
+  const startAt = new Date(now.getTime() - hours * 60 * 60 * 1000).getTime();
 
   // Get access token
   const token = await getAccessTokenUmami();
 
   // Fetch page views
-  const pageViewsUrl = `${
-    config.umami_api_url
-  }/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&unit=hour&timezone=${encodeURIComponent(
-    timeZone
-  )}&type=url&limit=20`;
+  const pageViewsUrl = `${config.umami_api_url}/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&unit=hour&type=url&limit=20`;
   const pageViewsResponse = await axios.get<PageView[]>(pageViewsUrl, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -63,9 +53,7 @@ export async function getAnalyticsData(hours: number) {
   for (const pageName of Object.keys(analytics)) {
     const countryViewsUrl = `${
       config.umami_api_url
-    }/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&unit=hour&timezone=${encodeURIComponent(
-      timeZone
-    )}&type=country&url=${encodeURIComponent(
+    }/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&unit=hour&type=country&url=${encodeURIComponent(
       pageName === "home" ? "/" : `/${pageName}`
     )}&limit=20`;
     const countryViewsResponse = await axios.get<CountryView[]>(
