@@ -1,4 +1,3 @@
-import { countryMap } from "../mock/country";
 import { getAnalyticsData } from "./get-analytics";
 import { getUptimeData } from "./get-uptime";
 import { sendSlackNotication } from "./slack-notication";
@@ -11,57 +10,39 @@ interface SlackBlock {
   };
 }
 
-export async function DailyReport(hours: number) {
+function formatTimeFrame(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes} minutes`;
+  } else {
+    const hours = Math.floor(minutes / 60);
+    return hours === 1 ? "1 hour" : `${hours} hours`;
+  }
+}
+
+export async function DailyReport(minutes: number) {
   try {
     const [analyticsData, uptimeData] = await Promise.all([
-      getAnalyticsData(hours || 2),
-      getUptimeData(hours || 2),
+      getAnalyticsData(minutes),
+      getUptimeData(minutes),
     ]);
 
-    let totalVisitors = 0;
     const analyticsBlocks: SlackBlock[] = [];
 
     for (const [pageName, visitorInfo] of Object.entries(
       analyticsData.analytics
     )) {
-      const displayPageName =
-        pageName === "en" ? "home" : pageName.replace("en/", "");
+      const displayPageName = pageName === "home" ? "home" : pageName;
 
-      if (typeof visitorInfo === "string") {
-        const formattedVisitors: string[] = [];
-        const visitors = visitorInfo.split(", ");
-
-        for (const info of visitors) {
-          const [count, country] = info.split(" - ");
-          const visitorCount = parseInt(count, 10);
-
-          if (!isNaN(visitorCount)) {
-            totalVisitors += visitorCount;
-          }
-
-          if (country) {
-            const countryInfo = countryMap[country.toLowerCase()];
-            if (countryInfo) {
-              formattedVisitors.push(
-                `${count} ${countryInfo.flag} ${countryInfo.name}`
-              );
-            } else {
-              formattedVisitors.push(info);
-            }
-          } else {
-            formattedVisitors.push(info);
-          }
-        }
-
-        analyticsBlocks.push({
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `• ${displayPageName}: ${formattedVisitors.join(", ")}`,
-          },
-        });
-      }
+      analyticsBlocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `• ${displayPageName}: ${visitorInfo}`,
+        },
+      });
     }
+
+    const timeFrame = formatTimeFrame(minutes);
 
     const message: { blocks: SlackBlock[] } = {
       blocks: [
@@ -69,7 +50,7 @@ export async function DailyReport(hours: number) {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `*Website Analytics and Uptime Report (Last ${hours} hours)*`,
+            text: `*Website Analytics and Uptime Report (Last ${timeFrame})*`,
           },
         },
         {
@@ -83,7 +64,14 @@ export async function DailyReport(hours: number) {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: "*Analytics:*\n- Total Visitors: " + totalVisitors,
+            text: `*Analytics:*`,
+          },
+        },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `*Total Views:* ${analyticsData.totalViews}`,
           },
         },
         ...analyticsBlocks,
@@ -95,6 +83,7 @@ export async function DailyReport(hours: number) {
     return "Daily report sent";
   } catch (error) {
     console.error("Error sending notification:", error);
+    throw error;
   }
 }
 

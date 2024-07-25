@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const hours = parseInt(searchParams.get("hours") || "24", 10);
+  const minutes = parseInt(searchParams.get("minutes") || "5", 10);
 
-  await DailyReport(hours);
+  await DailyReport(minutes);
   return NextResponse.json({ message: "Notification sent" });
 }
 
