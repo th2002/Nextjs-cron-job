@@ -38,7 +38,6 @@ async function executeGenNotificationJob(minutes) {
 }
 const CronJob = () => {
     node_cron_1.default.schedule("0 */2 * * *", () => executeGenNotificationJob(120));
-    node_cron_1.default.schedule("*/2 * * * *", () => executeGenNotificationJob(120));
     node_cron_1.default.schedule("0 0 * * *", () => executeGenNotificationJob(1440));
 };
 exports.default = CronJob;

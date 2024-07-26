@@ -41,7 +41,6 @@ async function executeGenNotificationJob(minutes: number) {
 
 const CronJob = () => {
   cron.schedule("0 */2 * * *", () => executeGenNotificationJob(120));
-  cron.schedule("*/2 * * * *", () => executeGenNotificationJob(120));
   cron.schedule("0 0 * * *", () => executeGenNotificationJob(1440));
 };
 
