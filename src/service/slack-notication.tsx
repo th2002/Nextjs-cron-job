@@ -1,22 +1,24 @@
 import axios from "axios";
-import { config } from "../config";
 
-export interface SlackBlock {
+export type BlocksType = {
   type: string;
   text: {
     type: string;
     text: string;
   };
-}
+};
 
-export async function sendSlackNotication(message: {
-  blocks: SlackBlock[];
-}): Promise<void> {
-  if (!config.slack_webhook_url) {
-    throw new Error("Slack webhook URL is not configured");
+export async function sendSlackNotication(
+  message: {
+    blocks: BlocksType[];
+  },
+  noti_endpoint: string
+): Promise<void> {
+  if (!noti_endpoint) {
+    throw new Error("Notication endpoint is not configured");
   }
 
-  const response = await axios.post(config.slack_webhook_url, message);
+  const response = await axios.post(noti_endpoint, message);
 
   if (response.status !== 200) {
     throw new Error("Failed to send Slack message");

@@ -1,14 +1,13 @@
 import axios from "axios";
-import { config } from "../config";
 
-async function getAccessTokenUmami() {
+async function getAccessTokenUmami(
+  umamiApiUrl: string,
+  umamiSecretKey: string
+) {
   try {
-    const response = await axios.post(
-      `${config.umami_api_url}/auth/verify-secret`,
-      {
-        secretKey: config.umami_secret_key,
-      }
-    );
+    const response = await axios.post(`${umamiApiUrl}/auth/verify-secret`, {
+      secretKey: umamiSecretKey,
+    });
 
     const accessToken = response.data.token;
     return accessToken;

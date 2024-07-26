@@ -19,11 +19,17 @@ function formatTimeFrame(minutes: number): string {
   }
 }
 
-export async function DailyReport(minutes: number) {
+export async function DailyReport(
+  minutes: number,
+  websiteId: string,
+  umamiApiUrl: string,
+  umamiSecretKey: string,
+  noti_endpoint: string
+) {
   try {
     const hours = Math.ceil(minutes / 60);
     const [analyticsData, uptimeData] = await Promise.all([
-      getAnalyticsData(minutes),
+      getAnalyticsData(minutes, websiteId, umamiApiUrl, umamiSecretKey),
       getUptimeData(hours),
     ]);
 
@@ -79,7 +85,7 @@ export async function DailyReport(minutes: number) {
       ],
     };
 
-    await sendSlackNotication(message);
+    await sendSlackNotication(message, noti_endpoint);
     console.log("Daily report sent");
     return "Daily report sent";
   } catch (error) {

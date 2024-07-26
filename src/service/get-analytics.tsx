@@ -18,14 +18,18 @@ interface PageAnalytics {
   countries: Record<string, number>;
 }
 
-export async function getAnalyticsData(minutes: number) {
+export async function getAnalyticsData(
+  minutes: number,
+  websiteId: string,
+  umamiApiUrl: string,
+  umamiSecretKey: string
+) {
   try {
-    const websiteId = config.umami_website_id;
     const now = new Date();
     const endAt = now.getTime();
     const startAt = new Date(now.getTime() - minutes * 60 * 1000).getTime();
 
-    const token = await getAccessTokenUmami();
+    const token = await getAccessTokenUmami(umamiApiUrl, umamiSecretKey);
 
     const pageViewsUrl = `${config.umami_api_url}/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&unit=minute&type=url&limit=20`;
 
@@ -136,3 +140,4 @@ export async function getAnalyticsData(minutes: number) {
     throw error;
   }
 }
+
