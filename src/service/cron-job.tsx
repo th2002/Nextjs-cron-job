@@ -1,18 +1,14 @@
-import cron from "node-cron";
+import "dotenv/config";
+
 import axios from "axios";
 import os from "os";
 import net from "net";
-import "dotenv/config";
+import { schedule } from "node-schedule";
+import { config } from "../config";
+import logger from "./logger";
 
-const MODE = process.env.MODE || "DEV";
-
-const isProduction = MODE !== "DEV";
-const defaultPort = process.env.PORT || "3000";
-
-const umami_gen_website_id = process.env.UMAMI_GEN_WEBSITE_ID;
-const genUmamiApiUrl = process.env.UMAMI_API_URL;
-const genUmamiSecretKey = process.env.UMAMI_GEN_SECRET_KEY;
-const gen_noti_endpoint = process.env.GEN_SLACK_WEBHOOK_URL;
+const isProduction = process.env.MODE !== "DEV";
+const defaultPort = process.env.PORT || 3000;
 
 function getServerUrl() {
   const hostname = net.isIP(os.hostname()) ? os.hostname() : "localhost";
@@ -26,22 +22,26 @@ async function executeGenNotificationJob(minutes: number) {
   const baseUrl = getServerUrl();
   try {
     await axios.post(
-      `${baseUrl}/api/notifications?minutes=${minutes}&websiteId=${umami_gen_website_id}`,
+      `${baseUrl}/api/notifications?minutes=${minutes}&websiteId=${config.umami_gen_website_id}`,
       {
-        umamiApiUrl: genUmamiApiUrl,
-        umamiSecretKey: genUmamiSecretKey,
-        noti_endpoint: gen_noti_endpoint,
+        umamiApiUrl: config.umami_api_url,
+        umamiSecretKey: config.umami_gen_secret_key,
+        noti_endpoint: config.gen_slack_webhook_url,
       }
     );
-    console.log(`Cron job executed (${minutes} minutes)`);
+    logger.info(`Cron job executed (${minutes} minutes)`);
   } catch (error) {
-    console.error(`Error executing ${minutes}-minutes cron job:`, error);
+    logger.error(`Error executing ${minutes}-minutes cron job:`, error);
   }
 }
 
 const CronJob = () => {
-  cron.schedule("0 */2 * * *", () => executeGenNotificationJob(120));
-  cron.schedule("0 0 * * *", () => executeGenNotificationJob(1440));
+  schedule(process.env.CRON_SCHEDULE_2HOURS || "0 */2 * * *", () =>
+    executeGenNotificationJob(120)
+  );
+  schedule(process.env.CRON_SCHEDULE_DAILY || "0 0 * * *", () =>
+    executeGenNotificationJob(1440)
+  );
 };
 
 export default CronJob;

@@ -1,5 +1,6 @@
 import { getAnalyticsData } from "./get-analytics";
 import { getUptimeData } from "./get-uptime";
+import logger from "./logger";
 import { sendSlackNotication } from "./slack-notication";
 
 interface SlackBlock {
@@ -19,6 +20,65 @@ function formatTimeFrame(minutes: number): string {
   }
 }
 
+interface AnalyticsData {
+  totalViews: number;
+  analytics: Record<string, { totalViews: number; ipDetect: string }>;
+}
+
+interface UptimeData {
+  uptime: string;
+}
+
+function createSlackMessage(
+  analyticsData: AnalyticsData,
+  uptimeData: UptimeData,
+  timeFrame: string
+): { blocks: SlackBlock[] } {
+  const analyticsBlocks: SlackBlock[] = Object.entries(
+    analyticsData.analytics
+  ).map(([pageName, pageData]) => ({
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: `• *${pageName}*:\n  Total views: ${pageData.totalViews}\n  IP detect:\n    ${pageData.ipDetect}`,
+    },
+  }));
+
+  return {
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Website Analytics and Uptime Report (Last ${timeFrame})*`,
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Uptime:* ${uptimeData.uptime}`,
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Analytics:*`,
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Total Views:* ${analyticsData.totalViews}`,
+        },
+      },
+      ...analyticsBlocks,
+    ],
+  };
+}
+
 export async function DailyReport(
   minutes: number,
   websiteId: string,
@@ -33,63 +93,14 @@ export async function DailyReport(
       getUptimeData(hours),
     ]);
 
-    console.log("uptime data", uptimeData);
-
-    const analyticsBlocks: SlackBlock[] = [];
-
-    for (const [pageName, pageData] of Object.entries(
-      analyticsData.analytics
-    )) {
-      analyticsBlocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `• *${pageName}*:\n  Total views: ${pageData.totalViews}\n  IP detect:\n    ${pageData.ipDetect}`,
-        },
-      });
-    }
-
     const timeFrame = formatTimeFrame(minutes);
-
-    const message: { blocks: SlackBlock[] } = {
-      blocks: [
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*Website Analytics and Uptime Report (Last ${timeFrame})*`,
-          },
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*Uptime:* ${uptimeData.uptime}`,
-          },
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*Analytics:*`,
-          },
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*Total Views:* ${analyticsData.totalViews}`,
-          },
-        },
-        ...analyticsBlocks,
-      ],
-    };
+    const message = createSlackMessage(analyticsData, uptimeData, timeFrame);
 
     await sendSlackNotication(message, noti_endpoint);
-    console.log("Daily report sent");
+    logger.info("Daily report sent");
     return "Daily report sent";
   } catch (error) {
-    console.error("Error sending notification:", error);
+    logger.error("Error sending notification:", error);
     throw error;
   }
 }
