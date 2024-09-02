@@ -3,7 +3,7 @@ import "dotenv/config";
 import axios from "axios";
 import os from "os";
 import net from "net";
-import { schedule } from "node-schedule";
+import schedule from "node-schedule";
 import { config } from "../config";
 import logger from "./logger";
 
@@ -36,10 +36,10 @@ async function executeGenNotificationJob(minutes: number) {
 }
 
 const CronJob = () => {
-  schedule(process.env.CRON_SCHEDULE_2HOURS || "0 */2 * * *", () =>
+  schedule.scheduleJob(process.env.CRON_SCHEDULE_2HOURS || "0 */2 * * *", () =>
     executeGenNotificationJob(120)
   );
-  schedule(process.env.CRON_SCHEDULE_DAILY || "0 0 * * *", () =>
+  schedule.scheduleJob(process.env.CRON_SCHEDULE_DAILY || "0 0 * * *", () =>
     executeGenNotificationJob(1440)
   );
 };

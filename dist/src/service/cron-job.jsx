@@ -7,7 +7,7 @@ require("dotenv/config");
 const axios_1 = __importDefault(require("axios"));
 const os_1 = __importDefault(require("os"));
 const net_1 = __importDefault(require("net"));
-const node_schedule_1 = require("node-schedule");
+const node_schedule_1 = __importDefault(require("node-schedule"));
 const config_1 = require("../config");
 const logger_1 = __importDefault(require("./logger"));
 const isProduction = process.env.MODE !== "DEV";
@@ -34,7 +34,7 @@ async function executeGenNotificationJob(minutes) {
     }
 }
 const CronJob = () => {
-    (0, node_schedule_1.schedule)(process.env.CRON_SCHEDULE_2HOURS || "0 */2 * * *", () => executeGenNotificationJob(120));
-    (0, node_schedule_1.schedule)(process.env.CRON_SCHEDULE_DAILY || "0 0 * * *", () => executeGenNotificationJob(1440));
+    node_schedule_1.default.scheduleJob(process.env.CRON_SCHEDULE_2HOURS || "0 */2 * * *", () => executeGenNotificationJob(120));
+    node_schedule_1.default.scheduleJob(process.env.CRON_SCHEDULE_DAILY || "0 0 * * *", () => executeGenNotificationJob(1440));
 };
 exports.default = CronJob;
