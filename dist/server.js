@@ -8,7 +8,7 @@ const next_1 = __importDefault(require("next"));
 const cron_job_1 = __importDefault(require("./src/service/cron-job"));
 const url_1 = require("url");
 require("dotenv/config");
-const logger_1 = __importDefault(require("@/service/logger"));
+const logger_1 = __importDefault(require("./src/service/logger"));
 const port = parseInt(process.env.PORT || "3000", 10);
 const isProduction = process.env.MODE !== "DEV";
 const app = (0, next_1.default)({ dev: !isProduction });

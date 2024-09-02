@@ -3,7 +3,7 @@ import next from "next";
 import CronJob from "./src/service/cron-job";
 import { parse } from "url";
 import "dotenv/config";
-import logger from "@/service/logger";
+import logger from "./src/service/logger";
 
 const port = parseInt(process.env.PORT || "3000", 10);
 const isProduction = process.env.MODE !== "DEV";
